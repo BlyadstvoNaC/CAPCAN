@@ -3,7 +3,7 @@ import sqlite3 as sl
 
 class DB:
     def __init__(self):
-        self.connection = sl.connect('delivery_service.db')
+        self.connection = sl.connect('My/delivery_service.db')
         self.insert_dict = self.filling_insert_dict()
         self.select_dict = self.filling_select_dict()
 
