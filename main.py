@@ -1,7 +1,7 @@
 import telebot
 from IgorFuntions import is_valid_email
-from My.Peremen import token
-from My.Peremen import user_data
+from Peremen import token
+from Peremen import user_data
 
 bot = telebot.TeleBot(token)
 
@@ -13,8 +13,11 @@ def handle_command(message):
         #регистрируем пользователя
         regist(message)
     elif message.text == '/profile':
-        pass
+        print(1)
 
+
+#                                   БЛОК РЕГИСТРАЦИИ                                    #
+#########################################################################################
 def regist(message):
     bot.send_message(message.chat.id, "Добро пожаловать в бот *****"
                                       "Пожалуйста предоставьте данные для регистрации")
@@ -40,15 +43,27 @@ def reg_tp_number(message):
 
 
 #функция для проверки введнного адреса почты
-
 def reg_email(message):
     if is_valid_email(message.text):
         # продумать кнопку возврат на шаг назад
         user_data[message.from_user.id].append(message.text)
         bot.send_message(message.chat.id, 'Спасибо за регистрацию!')
         print(user_data)  #user_data(список из 3 элементов нужно отправить в Бд)
+        message.text = '/profile'
     else:
         msg = bot.send_message(message.chat.id, 'Неверный паттерн почты, попробуйте еще раз')
         bot.register_next_step_handler(msg, reg_email)
 
+#########################################################################################
+
+#                                   БЛОК ИЗМЕНЕНИЯ ПРОФИЛЯ                              #
+#########################################################################################
+
+
+def set_profile():
+    pass
+
+
+
+#########################################################################################
 bot.infinity_polling()
