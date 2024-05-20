@@ -1,2 +1,2 @@
-token = '6914921661:AAG56fKntulgDq85YmFslJzJufR-jB_Y9qA'
+token = 0
 user_data = {}
