@@ -238,4 +238,4 @@ class DB:
 
 db = DB()
 db.create()
-db.filling_tables()
+# db.filling_tables()
