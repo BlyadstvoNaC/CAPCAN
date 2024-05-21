@@ -54,8 +54,7 @@ class DB:
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     dishes_id integer,
                     user_id integer,
-                    text TEXT,
-                    is_approved integer
+                    text TEXT
                     );
                 """)
             self.connection.execute("""
