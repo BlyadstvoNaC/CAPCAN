@@ -83,7 +83,7 @@ class DB:
                 self.insert(key, ['Фо-бо', 'Ужин', 33, '35', 'IMG/fobo.jpg', 0])
                 self.insert(key, ['Роллы', 'Ужин', 45, '40', 'IMG/sushi.jpg', 1])
             elif key == 'Comments':
-                self.insert(key, [1, 1, 'Блюдо превосходное', 0])
+                self.insert(key, [1, 1, 'Блюдо превосходное'])
             elif key == 'Dishes_comment':
                 self.insert(key, [1, 1, 5])
 
