@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 from IgorFuntions import is_valid_email
 from Peremen import user_data, token, command_list
+from DBfunctions import db
 
 bot = telebot.TeleBot(token)
 
@@ -9,9 +10,13 @@ bot = telebot.TeleBot(token)
 def handle_command(message):
     bot.clear_step_handler_by_chat_id(chat_id=message.chat.id)
     if message.text == '/start':
+        if db.is_registered(message.chat.id):
+            regist(message)
         #проверка id через функцию Оли(возвращает true или false)
         #регистрируем пользователя
-        regist(message)
+        else:
+            pass # вызываем меню
+
     elif message.text == '/profile':
         set_profile(message)
 
@@ -80,11 +85,11 @@ def reg_email(message):
 
 #                                   БЛОК ИЗМЕНЕНИЯ ПРОФИЛЯ                              #
 #########################################################################################
-@bot.callback_query_handlers(lambda callback: callback.data.startswith('pr_'))
+@bot.callback_query_handler(lambda callback: callback.data.startswith('pr_'))
 def change_profile(callback):
     data = callback.data[3:]
     if data == 'name':
-        pass
+        print("Изменить время")
     elif data == 'tp':
         pass
     elif data == 'address':
