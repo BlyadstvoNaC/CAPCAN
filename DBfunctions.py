@@ -167,6 +167,7 @@ class DB:
                 select_dict[i[0]] = self.select_sql(i[0])
             return select_dict
 
+    #поменять
     def new_client(self, list_of_val):
         sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,tel,email,adress) values (?,?,?,?,?)'
         self.insert('Users', list_of_val, sql_insert)
