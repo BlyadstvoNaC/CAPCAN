@@ -1,6 +1,5 @@
 import sqlite3 as sl
 
-
 class DB:
     def __init__(self):
         self.connection = sl.connect('My/delivery_service.db')
@@ -136,9 +135,6 @@ class DB:
             col_num = len(col)
             select_sql = 'SELECT '
             for ind, i in enumerate(col):
-                if i[1] == 'id':
-                    continue
-
                 if i[1] == 'adress' and table_name == 'Users':
                     col_num -= 1
                 if table_name == 'Users' and i[1] == 'is_admin':
@@ -150,12 +146,6 @@ class DB:
             select_sql += f' FROM {table_name}'
             return select_sql
 
-    def select(self, table_name):
-        with self.connection:
-            cur = self.connection.execute(self.select_dict[table_name])
-            data = cur.fetchall()
-        return data
-
     def filling_select_dict(self):
         with self.connection:
             cur = self.connection.execute('SELECT name FROM sqlite_master WHERE type="table"')
@@ -166,7 +156,12 @@ class DB:
                 select_dict[i[0]] = self.select_sql(i[0])
             return select_dict
 
-    #поменять
+    def select(self, table_name):
+        with self.connection:
+            cur = self.connection.execute(self.select_dict[table_name])
+            data = cur.fetchall()
+        return data
+
     def new_client(self, list_of_val):
         sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,tel,email,adress) values (?,?,?,?,?)'
         self.insert('Users', list_of_val, sql_insert)
@@ -179,9 +174,6 @@ class DB:
                 if i[0] not in categories:
                     categories.append(i[0])
         return categories
-
-    def new_order(self, order_data, dish_data):
-        pass
 
     def my_orders(self, tg_chat_id):
         sql_select = """SELECT * 
@@ -236,6 +228,69 @@ class DB:
         with self.connection:
             cur = self.connection.execute(sql_update)
 
+    def max_cooking_time(self, dish_id_list):
+        sql_ids = '('
+        col_num = len(dish_id_list)
+        for ind, id in enumerate(dish_id_list):
+            sql_ids += str(id)
+            if ind != col_num - 1:
+                sql_ids += ', '
+        sql_ids += ')'
+        sql = 'SELECT cooking_time FROM Dishes WHERE id in '
+        sql += sql_ids
+
+        with self.connection:
+            cur = self.connection.execute(sql)
+            list_of_cooking_time = cur.fetchall()
+
+        max_cooking_time = max(list_of_cooking_time)
+        return max_cooking_time[0]
+
+    def new_order(self, tg_chat_id, ordered_time, dish_data):
+        # Orders
+        sql_adress = f'SELECT adress FROM USERS WHERE tg_chat_id="{tg_chat_id}"'
+        sql_user_id = f'SELECT id FROM USERS WHERE tg_chat_id="{tg_chat_id}"'
+
+        dishes_id = []
+        for dish in dish_data:
+            dishes_id.append(dish[0])
+
+        cooking_time = self.max_cooking_time(dishes_id)
+
+        with self.connection:
+            cur = self.connection.execute(sql_adress)
+            adress = cur.fetchone()
+
+            cur = self.connection.execute(sql_user_id)
+            user_id = cur.fetchone()
+
+        list_of_val = [user_id[0], 0, ordered_time, cooking_time, adress[0]]
+        self.insert('Orders', list_of_val)
+
+        # DishesOrders
+        sql_order_id = 'SELECT id FROM Orders ORDER BY id DESC LIMIT 1'
+        with self.connection:
+            cur = self.connection.execute(sql_order_id)
+            order_id = cur.fetchone()
+            order_id = order_id[0]
+
+            for dish_id, count in dish_data:
+                list_of_val =  [dish_id, order_id, count]
+                self.insert('DishesOrders', list_of_val)
+
+
+    def dishes_data(self, order_id):
+        sql = f'SELECT Dishes.id, Dishes.name, DishesOrders.count, Dishes.price FROM DishesOrders INNER JOIN Dishes ON Dishes.id = DishesOrders.dishes_id WHERE orders_id={order_id}'
+
+        with self.connection:
+            cur = self.connection.execute(sql)
+            data = cur.fetchall()
+        return data
+
+    def order_is_delivered(self, order_id):
+        sql = f'UPDATE Orders SET is_delivered=1 WHERE id = {order_id}'
+        with self.connection:
+            self.connection.execute(sql)
 
 db = DB()
 db.create()
