@@ -161,6 +161,7 @@ class DB:
             cur = self.connection.execute(self.select_dict[table_name])
             data = cur.fetchall()
         return data
+
     def new_client(self, list_of_val):
         sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,tel,email,adress) values (?,?,?,?,?)'
         self.insert('Users', list_of_val, sql_insert)
@@ -277,6 +278,19 @@ class DB:
                 list_of_val =  [dish_id, order_id, count]
                 self.insert('DishesOrders', list_of_val)
 
+
+    def dishes_data(self, order_id):
+        sql = f'SELECT Dishes.id, Dishes.name, DishesOrders.count, Dishes.price FROM DishesOrders INNER JOIN Dishes ON Dishes.id = DishesOrders.dishes_id WHERE orders_id={order_id}'
+
+        with self.connection:
+            cur = self.connection.execute(sql)
+            data = cur.fetchall()
+        return data
+
+    def order_is_delivered(self, order_id):
+        sql = f'UPDATE Orders SET is_delivered=1 WHERE id = {order_id}'
+        with self.connection:
+            self.connection.execute(sql)
 
 db = DB()
 db.create()
