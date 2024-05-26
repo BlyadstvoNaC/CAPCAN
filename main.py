@@ -10,13 +10,11 @@ bot = telebot.TeleBot(token)
 def handle_command(message):
     bot.clear_step_handler_by_chat_id(chat_id=message.chat.id)
     if message.text == '/start':
+        #бог знает как пользоваться
         if db.is_registered(message.chat.id):
-            regist(message)
-        #проверка id через функцию Оли(возвращает true или false)
-        #регистрируем пользователя
+            regist(message.chat.id)
         else:
             pass # вызываем меню
-
     elif message.text == '/profile':
         set_profile(message)
 
@@ -76,6 +74,8 @@ def reg_email(message):
             bot.send_message(message.chat.id, 'Спасибо за регистрацию!')
             print(user_data)
             set_profile(message)
+
+            #функция добавления в БД
         else:
             msg = bot.send_message(message.chat.id, 'Неверный паттерн почты, попробуйте еще раз')
             bot.register_next_step_handler(msg, reg_email)
