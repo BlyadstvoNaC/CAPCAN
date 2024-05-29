@@ -293,5 +293,7 @@ class DB:
             self.connection.execute(sql)
 
 db = DB()
-db.create()
-# db.filling_tables()
+
+if __name__ == '__main__':
+    db.create()
+    db.filling_tables()
