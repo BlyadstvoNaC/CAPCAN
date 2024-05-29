@@ -3,7 +3,6 @@ from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from My import Bot_Food_Token
 from DBfunctions import db
-from FedorFunctions import *
 
 bot = telebot.TeleBot(Bot_Food_Token.TOKEN)
 
