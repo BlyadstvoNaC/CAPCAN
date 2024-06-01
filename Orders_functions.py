@@ -6,12 +6,6 @@ from DBfunctions import db
 
 bot = telebot.TeleBot(Bot_Food_Token.TOKEN)
 
-"""кнопки для перебора заказов постранично"""
-markupR = types.ReplyKeyboardMarkup(resize_keyboard=True)
-button_1 = types.KeyboardButton("<<<")
-button_2 = types.KeyboardButton(">>>")
-markupR.add(button_1, button_2)
-
 """кнопки Help, заказ подтвержден, сколько времени осталось?"""
 markupH = types.ReplyKeyboardMarkup(resize_keyboard=True)
 button_1 = types.KeyboardButton('Help')
@@ -21,14 +15,6 @@ markupH.add(button_1)
 markupH.add(button_2)
 markupH.add(button_3)
 
-"""инлайн-кнопки, для истории заказов?"""
-markupI = InlineKeyboardMarkup(row_width=1)
-data_history = db.orders_history('3fdf5g544')  # Тест
-print(data_history)
-for index, history in enumerate(data_history):
-    """взять из Оленой функции набор с заказами и вывести их по одному: заказ номер - дата"""
-    res_hystory = f'{history[0]} - {history[3]}'
-    markupI.add(InlineKeyboardButton(res_hystory, callback_data="m" + str(index)))
 
 """кнопки для basket?"""
 markupB = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -52,6 +38,49 @@ markupPb.add(button_1)
 
 my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
 """заполнить чем-то для проверки на наличие текущего заказа"""
+
+
+"""Функция получения истории заказов из БД и перевод их в список [номер заказа-дата](вроде?).
+На вход принимается история заказов из БД по Ольгиной функции в виде списка кортежей. Что ж за жизнь, то такая?"""
+
+
+def history_orders(data):
+    list_history_orders = []
+
+    for index, history in enumerate(data_history):
+        """взять из Оленой функции набор с заказами и вывести их по одному: заказ номер - дата"""
+        res_hystory = f'{history[0]} - {history[3]}'
+        list_history_orders.append(res_hystory)
+    return list_history_orders
+
+
+"""инлайн-кнопки, для истории заказов?"""
+
+# data_history = db.orders_history(message.chat.id)
+# data_history = db.orders_history('3fdf5g544')  # Тест
+data_history = [(1, 1, 1, '20240519 15:40:00', 50, 'г Минск, пр Держинского 154'),
+                (2, 1, 1, '20240519 16:40:00', 50, 'г Минск, пр Держинского 84'),
+                (3, 1, 1, '20240519 17:40:00', 50, 'г Минск, пр Держинского 154'),
+                (4, 1, 1, '20240519 18:40:00', 50, 'г Минск, пр Держинского 15'),
+                (5, 1, 1, '20240519 19:40:00', 50, 'г Минск, пр Держинского 54'),
+                (6, 1, 1, '20240519 20:40:00', 50, 'г Минск, пр Держинского 14')]  # Тест
+
+print(history_orders(data_history))
+
+
+def generate_markup(page):
+    markup = InlineKeyboardMarkup(row_width=1)
+    start_index = page * 2  # изменение цифры выводимых заказов
+    end_index = start_index + 2  # изменение цифры выводимых заказов
+    for item in history_orders(data_history)[start_index:end_index]:
+        markup.add(InlineKeyboardButton(item, callback_data="m" + f'{item}'))
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(InlineKeyboardButton("<<<", callback_data='<' + f'{page - 1}'))
+    if end_index < len(history_orders(data_history)):
+        nav_buttons.append(InlineKeyboardButton(">>>", callback_data='>' + f'{page + 1}'))
+    markup.row(*nav_buttons)
+    return markup
 
 
 def start(message):
@@ -108,18 +137,14 @@ def start(message):
         bot.send_message(message.chat.id, "Ждем шедулера? Бесконечность - это не предел...?")
 
     if message.text == '/history':
-        # if not my_dict_orders["user_tg_chat_id"]:
+
         bot.send_message(
             message.chat.id, "Список завершенных заказов",
-            reply_markup=markupR
         )
         bot.send_message(
             message.chat.id, "Выберите один из заказов ⬇️",
-            reply_markup=markupI
+            reply_markup=generate_markup(0)
         )
-    #
-    # elif message.text == '<<<':
-    #
 
     # x = ['a', 'b', 'c', 'd', 'e', 'w', 'df', 'ww', 'x', 'qa', 'wsx']
     #
@@ -232,23 +257,19 @@ def start(message):
 
         bot.send_message(message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
 
+
 def query_handler(call):
+
     bot.answer_callback_query(callback_query_id=call.id, )
-    id = call.message.chat.id
     flag = call.data[0]
     data = call.data[1:]
     if flag == "m":
-        # for cat in dict_cat[data]:
-        #     markupSh.add(InlineKeyboardButton(cat, callback_data="s" + cat))
-        # bot.send_message(call.message.chat.id, "Выбирайте 🥰", reply_markup=markupSh)
-        # bot.send_message(call.message.chat.id, data, reply_markup=markupSh)
-        bot.send_message(call.message.chat.id, "Текущий заказ ⬇️")
+        bot.send_message(call.message.chat.id, f"Выбранный из истории заказ ⬇️:  {data}")
         """выводим данные о клиенте?"""
         """взять их из БД? Вывели"""
         # data_my_order_hist = db.my_orders(message.chat.id)
         # data_my_client_hist = db.get_client_data(message.chat.id)
         # data_dishes_hist = db.dishes_data(history[0])
-        data_my_order_hist = db.orders_history('3fdf5g544')  # Тест
         data_my_client_hist = db.get_client_data('3fdf5g544')  # Тест
         data_dishes_hist = db.dishes_data(1)  # Тест
 
@@ -257,15 +278,13 @@ def query_handler(call):
         data_user = f'{data_my_client_hist[2]}\n{data_my_client_hist[3]}\n{data_my_client_hist[4]}\n{data_my_client_hist[5]}'
         bot.send_message(call.message.chat.id, "Данные о клиенте:")
         bot.send_message(call.message.chat.id, data_user)
-        # bot.send_message(call.message.chat.id, data_user, reply_markup=markupH)
 
-        print(data_my_order_hist)
         print(data_my_client_hist)
         print(data_dishes_hist)
         """выводим список блюд (тоже из бд или из корзины)?"""
         """взять их из откуда(БД)?"""
         """НЕ Выводим кнопки"""
-        bot.send_message(call.message.chat.id, "Список блюд и общая сумма заказа:")
+        bot.send_message(call.message.chat.id, f"Список блюд и общая сумма выбранного заказа ⬇️:   {data}")
         res_sum = 0
         res_dish_hist = ''
         for dish in data_dishes_hist:
@@ -274,31 +293,28 @@ def query_handler(call):
         bot.send_message(call.message.chat.id, res_dish_hist)
         bot.send_message(call.message.chat.id, (str(res_sum) + " руб."))
 
-    # if flag == "s":
-    #     markupC = InlineKeyboardMarkup()
-    #     for ind, shop in dict_shop[data]:
-    #         markupC.add(InlineKeyboardButton(shop, callback_data="x" + str(ind)))
-    #     bot.send_message(call.message.chat.id, "Выбирайте 🥰", reply_markup=markupC)
-    # #     bot.send_message(call.message.chat.id, data, reply_markup=markupC)
-    #
-    # if flag == "x":
-    #     bot.send_message(call.message.chat.id, "Чтобы воспользоваться акцией необходимо: перейти по ссылке, "
-    #                                            "скопировать промокод и ввести его на сайте или приложении магазина",
-    #                      )
-    #     bot.send_message(call.message.chat.id, index_text[data])
+    elif flag == "<" or flag == ">":
+        page = int(data)
+
+        bot.edit_message_text("Выберите один из заказов ⬇️", call.message.chat.id, call.message.message_id,
+                              reply_markup=generate_markup(page))
 
 
 print("Ready")
 
-
 if __name__ == "__main__":
     @bot.message_handler(content_types=['text'])
-    def f(message):
+    def message_handler(message):
         start(message)
+
+    # def send_history(message):
+    #     send_welcome(message)
 
 
     @bot.callback_query_handler(func=lambda call: True)
     def callback_handler(call):
         query_handler(call)
 
+
     bot.infinity_polling()
+
