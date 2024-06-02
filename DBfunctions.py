@@ -302,7 +302,6 @@ class DB:
 
     def dish_data_on_name(self, name):
         sql = self.select_sql('Dishes') + f' WHERE name="{name}"'
-        print(sql)
         with self.connection:
             cur = self.connection.execute(sql)
             data = cur.fetchone()
