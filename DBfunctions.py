@@ -214,14 +214,12 @@ class DB:
             data = cur.fetchall()
             return data[0]
 
-    # def menu_on_category(self, category):
-    #     sql_str = f'SELECT name FROM Dishes WHERE category="{category}" AND is_on_stop=0'
-    #     cur = self.connection.execute(sql_str)
-    #     data = cur.fetchall()
-    #     lst_of_dishes = []
-    #     for i in data:
-    #         lst_of_dishes.append(i[0])
-    #     return lst_of_dishes
+    def menu_data_on_category(self, category):
+        sql_str = f'SELECT id,name,category,price,cooking_time,img FROM Dishes WHERE category="{category}" AND is_on_stop=0'
+        with self.connection:
+            cur = self.connection.execute(sql_str)
+            data = cur.fetchall()
+        return data
 
     def on_stop(self, dish_id, flag):
         sql_update = f'UPDATE Dishes SET is_on_stop={flag} WHERE id={dish_id}'
@@ -291,6 +289,17 @@ class DB:
         sql = f'UPDATE Orders SET is_delivered=1 WHERE id = {order_id}'
         with self.connection:
             self.connection.execute(sql)
+
+    def update_client_data(self, tg_chat_id, list_of_val):
+        name = list_of_val[0]
+        tel = list_of_val[1]
+        email = list_of_val[2]
+        adress = list_of_val[3]
+
+        sql = f'UPDATE Users SET name="{name}", tel={tel}, email="{email}", adress="{adress}" WHERE tg_chat_id="{tg_chat_id}"'
+        with self.connection:
+            self.connection.execute(sql)
+
 
 db = DB()
 
