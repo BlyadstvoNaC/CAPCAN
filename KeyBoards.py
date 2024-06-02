@@ -1,4 +1,5 @@
 from telebot import types
+from DBfunctions import db
 
 #                                     Profile MurkUp                                   #
 #######################################################################################
@@ -12,3 +13,8 @@ confirm_button = types.InlineKeyboardButton("Продолжить", callback_dat
 profileMP.add(name_button, tp_button, address_button, email_button, confirm_button)
 
 ##########################################################################################
+
+MenuMP = types.InlineKeyboardMarkup(row_width=1)
+for i in db.categories():
+    button = types.InlineKeyboardButton(text=f"{i}", callback_data=f"men_{i}")
+    MenuMP.add(button)
