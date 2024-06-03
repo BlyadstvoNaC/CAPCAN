@@ -18,3 +18,5 @@ MenuMP = types.InlineKeyboardMarkup(row_width=1)
 for i in db.categories():
     button = types.InlineKeyboardButton(text=f"{i}", callback_data=f"men_{i}")
     MenuMP.add(button)
+button = types.InlineKeyboardButton(text="Корзина", callback_data=f"men_basket")
+MenuMP.add(button)

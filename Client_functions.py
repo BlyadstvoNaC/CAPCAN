@@ -5,6 +5,8 @@ from DBfunctions import db
 from My.BotToken import token
 import re
 
+user_order_dict = {}
+tmp_user_order_dict = {}
 user_data = {}
 command_list = ['/start', '/profile', '/menu', '/basket', '/history', '/my_orders']
 
@@ -23,9 +25,11 @@ def handle_command(message):
         if not db.is_registered(message.chat.id):
             regist(message)
         else:
-            check_menu(message)
+            bot.send_message(message.chat.id, "Наше меню", reply_markup=MenuMP)
     elif message.text == '/profile':
         set_profile(message)
+    elif message.text == '/menu':
+        check_menu(message)
 
 
 #                                   БЛОК РЕГИСТРАЦИИ                                    #
@@ -75,9 +79,8 @@ def reg_address(message):
         for i in user_data[message.from_user.id]:
             tmp_list.append(i)
         print(tmp_list)
-        tmp_list.clear()
         db.new_client(tmp_list)
-
+        tmp_list.clear()
         set_profile(message)
 
 
@@ -182,26 +185,70 @@ def check_menu(message):
 @bot.callback_query_handler(lambda callback: callback.data.startswith('men_'))
 def check_dishes(callback):
     data = callback.data[4:]
-    markup = get_dishes_keyboard(data)
-    bot.send_message(callback.message.chat.id, "Выбирите блюдо:", reply_markup=markup)
+    if data == "basket":
+        pass  #функция Феди
+    else:
+        markup = get_dishes_keyboard(data)
+        bot.send_message(callback.message.chat.id, "Выбирите блюдо:", reply_markup=markup)
 
 
+#все таки нужен callback
 def get_dishes_keyboard(category):
-    dishesMP = types.ReplyKeyboardMarkup()
+    dishesMP = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     for i in db.menu_data_on_category(category):
         button = types.KeyboardButton(f"{i[1]}")
         dishesMP.add(button)
     return dishesMP
 
+def generate_order_keyb(cnt):
+    dishMP = types.InlineKeyboardMarkup(row_width=3)
+    buttonPlus = types.InlineKeyboardButton("+", callback_data='ds_+')
+    buttonMinus = types.InlineKeyboardButton("-", callback_data='ds_-')
+    buttonCount = types.InlineKeyboardButton(f"{cnt}", callback_data='ds_cnt')
+    buttonBasket = types.InlineKeyboardButton("Добавить в корзину", callback_data='ds_bask')
+    buttonMenu = types.InlineKeyboardButton("вернуться в меню", callback_data='ds_menu')
+    buttonRSwipe = types.InlineKeyboardButton("⏩", callback_data='ds_r')
+    buttonLSwipe = types.InlineKeyboardButton("⏪", callback_data='ds_l')
+    dishMP.add(buttonMinus, buttonCount, buttonPlus, buttonLSwipe, buttonMenu, buttonRSwipe, buttonBasket)
+    return dishMP
 
 @bot.message_handler(content_types=['text'])
-def dish_info(text):
-    pass
+def dish_info(message):
+    tmp = db.dish_data_on_name(message.text)
+    tmp_user_order_dict.update({message.from_user.id: [tmp[0], tmp[1], 1, tmp[3]]})
+    bot.send_photo(message.chat.id, photo=open(tmp[5], 'rb'), caption=f'{tmp[1]}', reply_markup=generate_order_keyb(1))
+
+@bot.callback_query_handler(lambda callback: callback.data.startswith('ds_'))
+def make_order(callback):
+    data = callback.data[3:]
+    if data == 'menu':
+        check_menu(callback.message)
+    elif data == 'bask':
+        pass #user_order_dict отправляется Феде
+    elif data == '+':
+        cnt = user_order_dict[callback.message.chat.id][2]
+        cnt+=1
+        murkup = generate_order_keyb(cnt)
+        tmp_user_order_dict[callback.message.chat.id][2] = cnt
+        bot.edit_message_reply_markup(chat_id=callback.message.chat.id,  message_id=callback.message.message_id, reply_markup=murkup)
+    elif data == '-':
+        cnt = user_order_dict[callback.message.chat.id][2]
+        if cnt > 1:
+            cnt -= 1
+            murkup = generate_order_keyb(cnt)
+            tmp_user_order_dict[callback.message.chat.id][2] = cnt
+            bot.edit_message_reply_markup(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                      reply_markup=murkup)
+        else:
+            pass
+    elif data == 'cnt':
+        pass
+    elif data == 'r':
+        pass
+    elif data == 'l':
+        pass
 
 
 #########################################################################################
-
-
-
 
 bot.infinity_polling()
