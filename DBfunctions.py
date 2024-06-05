@@ -70,7 +70,7 @@ class DB:
             if key == 'Users':
                 self.insert(key, ['3fdf5g544', 'Николай', 293956447, 'jfhg@gmail.com', 'Г Минск Пр Держинского', None])
                 self.insert(key, ['nfj4j3nj4', 'Евгения', 293954547, 'djkfj@gmail.com', 'Г Минск Пр Держинского', None])
-                self.insert(key, ['u8h3ruhr3', 'Софья', None, None, None, 1])
+                # self.insert(key, ['u8h3ruhr3', 'Софья', None, None, None, 1])
             elif key == 'Orders':
                 self.insert(key, [1, 1, '20240519 15:40:00', '50', 'г Минск, пр Держинского 154'])
             elif key == 'DishesOrders':
@@ -314,8 +314,19 @@ class DB:
             data = cur.fetchone()
         return data
 
+    def initialize_super_admin(self):
+        SUPER_ADMIN_TG_CHAT_ID = '7039255546'
+        SUPER_ADMIN_NAME = 'Mirik'
+        with self.connection:
+            sql = self.select_dict['Users'] + f' WHERE is_admin=1'
+            cur = self.connection.execute(sql)
+            data = cur.fetchall()
+            if not data:
+                self.insert('Users', [SUPER_ADMIN_TG_CHAT_ID, SUPER_ADMIN_NAME, None, None, None, 1])
+
 db = DB()
 
 if __name__ == '__main__':
     db.create()
     db.filling_tables()
+    db.initialize_super_admin()
