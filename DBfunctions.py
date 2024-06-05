@@ -307,6 +307,12 @@ class DB:
             data = cur.fetchone()
         return data
 
+    def dish_data_on_id(self, dish_id):
+        sql = self.select_sql('Dishes') + f' WHERE id={dish_id}'
+        with self.connection:
+            cur = self.connection.execute(sql)
+            data = cur.fetchone()
+        return data
 
 db = DB()
 
