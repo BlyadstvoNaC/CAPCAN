@@ -5,7 +5,19 @@ from DBfunctions import DB
 
 bot = telebot.TeleBot('7073410632:AAGKQTCNrJvlJxZIHJHlr6k08TEt5sDRW0c')
 
+#SUPER_ADMIN_CHAT_ID = "7039255546"
+
 admins = {}
+
+dish_data = {}
+
+def is_admin(user_id):
+    result = db.select_one('Users', 'is_admin', 'tg_chat_id', user_id)
+    return result is not None and result[0] == 1
+
+def is_super_admin(user_id):
+    result = db.select_one('Users', 'is_super_admin', 'tg_chat_id', user_id)
+    return result is not None and result[0] == 1
 
 
 @bot.message_handler(commands=['start'])
@@ -18,9 +30,12 @@ def start(message):
 
 @bot.message_handler(commands=['add_admin'])
 def add_admin(message):
+    if not is_super_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Супер Админ.')
+        return
 
     try:
-        _, user_id, username = message.text.split()
+        _, tg_chat_id, name, tel, email, adress = message.text.split()
         #admins[int(user_id)] = username
         is_admin = 1
         db.insert('Users', [tg_chat_id, name, tel, email, adress, is_admin])
@@ -32,10 +47,13 @@ def add_admin(message):
 
 @bot.message_handler(commands=['change_admin'])
 def change_admin(message):
+    if not is_super_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Супер Админ.')
+        return
     try:
         _, user_id, new_username = message.text.split()
         user_id = int(user_id)
-        admin_data = db.get_client_data(user_id)
+        #admin_data = db.get_client_data(user_id)
         if db.is_registered(user_id):
             old_username = db.get_client_data(user_id)[2]
             db.update('Users', 'name', new_username, user_id)
@@ -104,21 +122,33 @@ def get_admins(chat_id):
 
 @bot.message_handler(commands=['add_dish'])
 def add_dish(message):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     dish_data[message.chat.id] = {}
     bot.send_message(message.chat.id, 'Введите название блюда:')
     bot.register_next_step_handler(message, get_dish_name)
 
 def get_dish_name(message):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     dish_data[message.chat.id]['name'] = message.text
     bot.send_message(message.chat.id, 'Введите категорию блюда:')
     bot.register_next_step_handler(message, get_dish_category)
 
 def get_dish_category(message):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     dish_data[message.chat.id]['category'] = message.text
     bot.send_message(message.chat.id, 'Введите цену блюда:')
     bot.register_next_step_handler(message, get_dish_price)
 
 def get_dish_price(message):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     try:
         dish_data[message.chat.id]['price'] = float(message.text)
         bot.send_message(message.chat.id, 'Введите время готовки блюда (в формате HH:MM:SS):')
@@ -128,6 +158,9 @@ def get_dish_price(message):
         bot.register_next_step_handler(message, get_dish_price)
 
 def get_dish_cooking_time(message):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     try:
         dish_data[message.chat.id]['cooking_time'] = message.text
         bot.send_message(message.chat.id, 'Введите ссылку на изображение блюда:')
@@ -137,6 +170,9 @@ def get_dish_cooking_time(message):
         bot.register_next_step_handler(message, get_dish_cooking_time)
 
 def get_dish_img(message):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     dish_data[message.chat.id]['img'] = message.text
     dish_data[message.chat.id]['is_on_stop'] = 0
     db.insert('Dishes', [
@@ -151,6 +187,9 @@ def get_dish_img(message):
     dish_data.pop(message.chat.id)
 
 def get_dishes(chat_id):
+    if not is_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
     dishes = db.select('Dishes')
     if dishes:
         dish_list = "\n".join([f"{dish[1]} - {dish[2]}" for dish in dishes])
@@ -173,22 +212,38 @@ def get_text_messages(message):
         markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
         bot.send_message(message.from_user.id, '❓ Задайте интересующий вопрос', reply_markup=markup)  # ответ бота
     elif message.text == 'Супер Админ':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn7 = types.KeyboardButton('Добавить администратора')
-        btn8 = types.KeyboardButton('Изменить')
-        markup.add(btn7, btn8)
-        bot.send_message(message.from_user.id, 'Привет, Супер Админ, выбери что хочешь сделать', reply_markup=markup)
-        get_admins(message.chat.id)
+        if is_super_admin(message.from_user.id):
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn7 = types.KeyboardButton('Добавить администратора')
+            btn8 = types.KeyboardButton('Изменить')
+            markup.add(btn7, btn8)
+            bot.send_message(message.from_user.id, 'Привет, Супер Админ, выбери что хочешь сделать',
+                             reply_markup=markup)
+            get_admins(message.chat.id)
+        else:
+            bot.send_message(message.chat.id, 'Вы не Супер Админ.')
     elif message.text == 'Добавить администратора':
-        bot.send_message(message.chat.id,
-                         'Используйте команду /add_admin tg_chat_id name tel email adress для добавления администратора.')
+        if is_super_admin(message.from_user.id):
+            bot.send_message(message.chat.id,
+                             'Используйте команду /add_admin tg_chat_id name tel email adress для добавления администратора.')
+        else:
+            bot.send_message(message.chat.id, 'Вы не Супер Админ.')
     elif message.text == 'Изменить':
-        bot.send_message(message.chat.id,
-                         'Используйте команду /change_admin user_id new_username для изменения администратора.')
+        if is_super_admin(message.from_user.id):
+            bot.send_message(message.chat.id,
+                             'Используйте команду /change_admin user_id new_username для изменения администратора.')
+        else:
+            bot.send_message(message.chat.id, 'Вы не Супер Админ.')
     elif message.text == 'Добавить блюдо':
-        add_dish(message)
+        if is_admin(message.from_user.id):
+            add_dish(message)
+        else:
+            bot.send_message(message.chat.id, 'Вы не Администратор.')
     elif message.text == 'Блюда':
-        get_dishes(message.chat.id)
+        if is_admin(message.from_user.id):
+            get_dishes(message.chat.id)
+        else:
+            bot.send_message(message.chat.id, 'Вы не Администратор.')
 
 # def dish_category(message):
 #     category = message.text
