@@ -318,11 +318,12 @@ class DB:
         SUPER_ADMIN_TG_CHAT_ID = '7039255546'
         SUPER_ADMIN_NAME = 'Mirik'
         with self.connection:
-            sql = self.select_dict['Users'] + f' WHERE is_admin=1'
+            sql = f'SELECT * FROM Users WHERE is_admin=1'
             cur = self.connection.execute(sql)
             data = cur.fetchall()
             if not data:
-                self.insert('Users', [SUPER_ADMIN_TG_CHAT_ID, SUPER_ADMIN_NAME, None, None, None, 1])
+                sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,is_admin) values (?,?,?)'
+                self.connection.execute(sql_insert, [SUPER_ADMIN_TG_CHAT_ID, SUPER_ADMIN_NAME,  1])
 
 db = DB()
 
