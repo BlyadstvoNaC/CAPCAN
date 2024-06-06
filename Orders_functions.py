@@ -3,7 +3,7 @@ from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # from Bot_Dishes.Client_functions import user_order_dict
-from My import Bot_Food_Token
+from My import BotToken
 from DBfunctions import db
 from Sheduler import schedule_message, start_scheduler_thread
 import logging
@@ -12,7 +12,7 @@ import threading
 
 logging.basicConfig(level=logging.INFO)
 
-bot = telebot.TeleBot(Bot_Food_Token.token)
+bot = telebot.TeleBot(BotToken.token)
 
 # """кнопки Help, заказ подтвержден, сколько времени осталось?"""
 # markupH = types.ReplyKeyboardMarkup(resize_keyboard=True)
