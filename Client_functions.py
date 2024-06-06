@@ -4,7 +4,7 @@ from KeyBoards import profileMP, MenuMP
 from DBfunctions import db
 from My.BotToken import token
 import re
-from Orders_functions import send_basket, check_history, query_handler
+from Orders_functions import send_basket, query_handler
 
 user_order_dict = {}  #корзина общая с Федей
 user_data = {}
@@ -29,7 +29,8 @@ def handle_command(message):
     elif message.text == '/menu':
         check_menu(message)
     elif message.text == '/history':
-        check_history(message)
+        pass
+        #check_history(message)
     elif message.text == '/my_orders':
         pass
 
