@@ -212,8 +212,14 @@ def make_order(callback):
     if data == 'menu':
         check_menu(callback.message)
     elif data == 'bask':
-        #user_order_dict.update(f'{check_user_id(callback)}':' ')
-        pass
+        tmp = db.dish_data_on_name(check_name(callback))
+        user_id = check_user_id(callback)
+        dish = (tmp[0], tmp[1], check_count(callback), tmp[4])
+        if user_id not in user_order_dict.keys():
+            user_order_dict.update({user_id : [dish]})
+        else:
+            user_order_dict[user_id].append(dish)
+
     elif data == '+':
         cnt = check_count(callback)+1
         name = str(check_name(callback))
