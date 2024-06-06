@@ -219,7 +219,7 @@ def make_order(callback):
             user_order_dict.update({user_id : [dish]})
         else:
             user_order_dict[user_id].append(dish)
-
+        print(user_order_dict)
     elif data == '+':
         cnt = check_count(callback)+1
         name = str(check_name(callback))
