@@ -146,6 +146,16 @@ class DB:
             select_sql += f' FROM {table_name}'
             return select_sql
 
+    def execute_select_sql(self, query, params=None):
+        with self.connection:
+            cur = self.connection.cursor()
+            if params:
+                cur.execute(query, params)
+            else:
+                cur.execute(query)
+            result = cur.fetchall()
+        return result
+
     def filling_select_dict(self):
         with self.connection:
             cur = self.connection.execute('SELECT name FROM sqlite_master WHERE type="table"')
@@ -324,6 +334,12 @@ class DB:
             if not data:
                 sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,is_admin) values (?,?,?)'
                 self.connection.execute(sql_insert, [SUPER_ADMIN_TG_CHAT_ID, SUPER_ADMIN_NAME,  1])
+
+    def is_super_admin(self, user_id):
+        with self.connection:
+            sql = 'SELECT is_admin FROM Users WHERE tg_chat_id=?'
+            result = self.connection.execute(sql, (user_id,)).fetchone()
+        return result is not None and result[0] == 1
 
     def add_admin(self, list_of_val):
         insert_sql = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,tel,email,adress,is_admin) values (?,?,?,?,?,0)'
