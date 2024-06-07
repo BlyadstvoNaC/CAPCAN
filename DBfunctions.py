@@ -325,6 +325,18 @@ class DB:
                 sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,is_admin) values (?,?,?)'
                 self.connection.execute(sql_insert, [SUPER_ADMIN_TG_CHAT_ID, SUPER_ADMIN_NAME,  1])
 
+    def add_admin(self, list_of_val):
+        insert_sql = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,tel,email,adress,is_admin) values (?,?,?,?,?,0)'
+        self.insert('Users', list_of_val, insert_sql)
+
+    def get_admins(self):
+        sql = 'SELECT id, name FROM Users WHERE is_admin=0'
+        with self.connection:
+            cur = self.connection.execute(sql)
+            data = cur.fetchall()
+        return data
+
+
 db = DB()
 
 if __name__ == '__main__':
