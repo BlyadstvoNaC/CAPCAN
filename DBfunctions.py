@@ -352,6 +352,11 @@ class DB:
             data = cur.fetchall()
         return data
 
+    def update_admin(self, tg_chat_id, name):
+        sql = f'UPDATE Users SET name="{name}" WHERE tg_chat_id="{tg_chat_id}"'
+        with self.connection:
+            self.connection.execute(sql)
+
 
 db = DB()
 
