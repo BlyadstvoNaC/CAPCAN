@@ -60,6 +60,14 @@ order_schedule_times = {}
 """Функция получения истории заказов из БД и перевод их в список [номер заказа-дата](вроде?).
 На вход принимается история заказов из БД по Ольгиной функции в виде списка кортежей. Что ж за жизнь, то такая?"""
 
+def check_history(message):
+    bot.send_message(
+        message.chat.id, "Список завершенных заказов.",
+    )
+    bot.send_message(
+        message.chat.id, "Выберите один из заказов ⬇️:",
+        reply_markup=generate_markup(0)
+    )
 
 def history_orders(data):
     list_history_orders = []
@@ -167,13 +175,7 @@ def start(message):
     #     bot.send_message(message.chat.id, "Ждем шедулера? Бесконечность - это не предел...?")
 
     if message.text == '/history':
-        bot.send_message(
-            message.chat.id, "Список завершенных заказов.",
-        )
-        bot.send_message(
-            message.chat.id, "Выберите один из заказов ⬇️:",
-            reply_markup=generate_markup(0)
-        )
+        check_history(message)
 
     # x = ['a', 'b', 'c', 'd', 'e', 'w', 'df', 'ww', 'x', 'qa', 'wsx']
     #
