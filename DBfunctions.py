@@ -341,6 +341,9 @@ class DB:
         with self.connection:
             self.connection.execute(sql)
 
+    def get_dishes(self):
+        return self.select('Dishes')
+
 
 db = DB()
 
