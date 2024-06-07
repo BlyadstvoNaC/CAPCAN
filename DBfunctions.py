@@ -77,10 +77,10 @@ class DB:
                 self.insert(key, [1, 1, 1])
                 self.insert(key, [3, 1, 2])
             elif key == 'Dishes':
-                self.insert(key, ['Пицца', 'Обед', 20, '40', 'IMG/pizza.jpg', 0])
-                self.insert(key, ['Омлет', 'Завтрак', 17, '25', 'IMG/omelet.jpg', 0])
-                self.insert(key, ['Фо-бо', 'Ужин', 33, '35', 'IMG/fobo.jpg', 0])
-                self.insert(key, ['Роллы', 'Ужин', 45, '40', 'IMG/sushi.jpg', 1])
+                self.insert(key, ['Пицца', 'Обед', 20, '01:30:00', 'IMG/pizza.jpg', 0])
+                self.insert(key, ['Омлет', 'Завтрак', 17, '00:30:00', 'IMG/omelet.jpg', 0])
+                self.insert(key, ['Фо-бо', 'Ужин', 33, '02:30:00', 'IMG/fobo.jpg', 0])
+                self.insert(key, ['Роллы', 'Ужин', 45, '03:00:00', 'IMG/sushi.jpg', 1])
             elif key == 'Comments':
                 self.insert(key, [1, 1, 'Блюдо превосходное'])
             elif key == 'Dishes_comment':
@@ -145,6 +145,16 @@ class DB:
                     select_sql += ','
             select_sql += f' FROM {table_name}'
             return select_sql
+
+    def execute_select_sql(self, query, params=None):
+        with self.connection:
+            cur = self.connection.cursor()
+            if params:
+                cur.execute(query, params)
+            else:
+                cur.execute(query)
+            result = cur.fetchall()
+        return result
 
     def filling_select_dict(self):
         with self.connection:
@@ -324,6 +334,32 @@ class DB:
             if not data:
                 sql_insert = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,is_admin) values (?,?,?)'
                 self.connection.execute(sql_insert, [SUPER_ADMIN_TG_CHAT_ID, SUPER_ADMIN_NAME,  1])
+
+    def is_super_admin(self, user_id):
+        with self.connection:
+            sql = 'SELECT is_admin FROM Users WHERE tg_chat_id=?'
+            result = self.connection.execute(sql, (user_id,)).fetchone()
+        return result is not None and result[0] == 1
+
+    def add_admin(self, list_of_val):
+        insert_sql = 'INSERT OR IGNORE INTO Users(tg_chat_id,name,tel,email,adress,is_admin) values (?,?,?,?,?,0)'
+        self.insert('Users', list_of_val, insert_sql)
+
+    def get_admins(self):
+        sql = 'SELECT tg_chat_id, name  FROM Users WHERE is_admin=0'
+        with self.connection:
+            cur = self.connection.execute(sql)
+            data = cur.fetchall()
+        return data
+
+    def update_admin(self, tg_chat_id, name):
+        sql = f'UPDATE Users SET name="{name}" WHERE tg_chat_id="{tg_chat_id}"'
+        with self.connection:
+            self.connection.execute(sql)
+
+    def get_dishes(self):
+        return self.select('Dishes')
+
 
 db = DB()
 
