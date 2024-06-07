@@ -330,7 +330,7 @@ class DB:
         self.insert('Users', list_of_val, insert_sql)
 
     def get_admins(self):
-        sql = 'SELECT id, name FROM Users WHERE is_admin=0'
+        sql = 'SELECT tg_chat_id, name  FROM Users WHERE is_admin=0'
         with self.connection:
             cur = self.connection.execute(sql)
             data = cur.fetchall()
