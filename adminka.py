@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 #from My.Bot_Token import token
 from DBfunctions import DB
+import requests
 
 bot = telebot.TeleBot('7073410632:AAGKQTCNrJvlJxZIHJHlr6k08TEt5sDRW0c')
 db = DB()
@@ -117,6 +118,10 @@ def add_dish(message):
 #     else:
 #         bot.send_message(chat_id, "Список блюд пуст.")
 
+@bot.message_handler(commands=['get_dishes'])
+def get_dishes_command(message):
+    get_dishes(message)
+
 def get_dish_category(message):
     if not is_admin_or_super_admin(message.from_user.id):
         bot.send_message(message.chat.id, 'Вы не Администратор.')
@@ -163,16 +168,33 @@ def get_dish_img(message):
     bot.send_message(message.chat.id, f"Блюдо '{dish_data[message.chat.id]['name']}' добавлено.")
     dish_data.pop(message.chat.id)
 
+
 def get_dishes(message):
     if not is_admin_or_super_admin(message.from_user.id):
         bot.send_message(message.chat.id, 'Вы не Администратор.')
         return
-    dishes = db.execute_select_sql('SELECT * FROM Dishes')
-    if dishes:
-        dish_list = "\n".join([f"{dish[1]} - {dish[2]}" for dish in dishes])
-        bot.send_message(message.chat.id, f"Список блюд:\n{dish_list}")
+
+    categories = db.categories()
+
+    if categories:
+        markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+        for category in categories:
+            markup.add(types.KeyboardButton(category))
+
+        bot.send_message(message.chat.id, "Выберите категорию блюд:", reply_markup=markup)
+        bot.register_next_step_handler(message, handle_category_selection)
     else:
-        bot.send_message(message.chat.id, "Список блюд пуст.")
+        bot.send_message(message.chat.id, "Список категорий пуст.")
+
+@bot.message_handler(func=lambda message: True)
+def handle_category_selection(message):
+    categories = db.categories()
+    if message.text in db.categories():
+        category = message.text
+        get_dishes_by_category(message, category)
+    else:
+        bot.send_message(message.chat.id, "Пожалуйста, выберите категорию из списка.")
+    get_categories(message)
 
 def get_dish_name(message):
     if not is_admin_or_super_admin(message.from_user.id):
@@ -183,8 +205,44 @@ def get_dish_name(message):
     bot.send_message(message.chat.id, f'Вы добавляете блюдо с названием: {dish_name}. Теперь введите категорию блюда:')
     bot.register_next_step_handler(message, get_dish_category)
 
+
+def get_dishes_by_category(message, category):
+    if not is_admin_or_super_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
+
+    dishes = db.menu_data_on_category(category)
+    if dishes:
+        for dish in dishes:
+            dish_name = dish[1]
+            dish_category = dish[2]
+            dish_price = dish[3]
+            dish_cooking_time = dish[4]
+
+            dish_info = f"Название: {dish_name}\nКатегория: {dish_category}\nЦена: {dish_price}\nВремя готовки: {dish_cooking_time}"
+            bot.send_message(message.chat.id, dish_info)
+    else:
+        bot.send_message(message.chat.id, f"Список блюд в категории '{category}' пуст.")
+
+
+def get_categories(message):
+    if not is_admin_or_super_admin(message.from_user.id):
+        bot.send_message(message.chat.id, 'Вы не Администратор.')
+        return
+
+    categories = db.categories()
+    if categories:
+        markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+        for category in categories:
+            markup.add(types.KeyboardButton(category))
+
+        bot.send_message(message.chat.id, "Выберите категорию блюд:", reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id, "Список категорий пуст.")
+
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
+    categories = db.categories()
     if message.text == '👋 Поздороваться':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton('Супер Админ')
@@ -231,9 +289,32 @@ def get_text_messages(message):
 
     elif message.text == 'Блюда':
         if is_admin_or_super_admin(message.from_user.id):
-            get_dishes(message)
+            get_categories(message)
         else:
             bot.send_message(message.chat.id, 'Вы не Администратор.')
+
+    elif message.text == 'Выбрать категорию':
+
+        get_dishes(message)
+
+    elif message.text in categories:
+
+        dishes_data = db.menu_data_on_category(message.text)
+
+        if dishes_data:
+
+             for dish in dishes_data:
+                dish_info = f"Название: {dish[1]}\nКатегория: {dish[2]}\nЦена: {dish[3]}\nВремя готовки: {dish[4]}"
+
+                bot.send_message(message.chat.id, dish_info)
+
+        else:
+
+            bot.send_message(message.chat.id, f"Список блюд в категории '{message.text}' пуст.")
+
+    else:
+        pass
+
 
 # def dish_category(message):
 #     category = message.text
