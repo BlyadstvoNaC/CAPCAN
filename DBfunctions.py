@@ -77,10 +77,10 @@ class DB:
                 self.insert(key, [1, 1, 1])
                 self.insert(key, [3, 1, 2])
             elif key == 'Dishes':
-                self.insert(key, ['Пицца', 'Обед', 20, '40', 'IMG/pizza.jpg', 0])
-                self.insert(key, ['Омлет', 'Завтрак', 17, '25', 'IMG/omelet.jpg', 0])
-                self.insert(key, ['Фо-бо', 'Ужин', 33, '35', 'IMG/fobo.jpg', 0])
-                self.insert(key, ['Роллы', 'Ужин', 45, '40', 'IMG/sushi.jpg', 1])
+                self.insert(key, ['Пицца', 'Обед', 20, '01:30:00', 'IMG/pizza.jpg', 0])
+                self.insert(key, ['Омлет', 'Завтрак', 17, '00:30:00', 'IMG/omelet.jpg', 0])
+                self.insert(key, ['Фо-бо', 'Ужин', 33, '02:30:00', 'IMG/fobo.jpg', 0])
+                self.insert(key, ['Роллы', 'Ужин', 45, '03:00:00', 'IMG/sushi.jpg', 1])
             elif key == 'Comments':
                 self.insert(key, [1, 1, 'Блюдо превосходное'])
             elif key == 'Dishes_comment':
