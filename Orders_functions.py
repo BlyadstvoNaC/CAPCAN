@@ -22,12 +22,15 @@ markupH.add(button_1)
 markupH.add(button_2)
 markupH.add(button_3)
 
-# my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
+my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
 """заполнить чем-то для проверки на наличие текущего заказа"""
-user_order_dict = {message.chat.id: [(1, 'Пицца', 1, 20), (), (), ]}
+# user_order_dict = {message.chat.id: [(1, 'Пицца', 1, 20), (), (), ]}
 
 # Для сохранения время отправки
 order_schedule_times = {}
+# хрень для сохранения заказа в бд
+list_order_for_bd = []
+
 """Функция получения истории заказов из БД и перевод их в список [номер заказа-дата](вроде?).
 На вход принимается история заказов из БД по Ольгиной функции в виде списка кортежей. Что ж за жизнь, то такая?"""
 
@@ -92,10 +95,25 @@ def generate_markup(page):
     return markup
 
 
+"""Функция обработки history"""
+
+
+def check_history(message):
+    if message.text == '/history':
+        bot.send_message(
+            message.chat.id, "Список завершенных заказов.",
+        )
+        bot.send_message(
+            message.chat.id, "Выберите один из заказов ⬇️:",
+            reply_markup=generate_markup(0)
+        )
+
+
 def start(message):
     if message.text == '/my_orders':
         # """проверка на наличие текущего заказа"""
         # if my_dict_orders["user_tg_chat_id"]:
+        # if user_order_dict[message.chat.id]:
         bot.send_message(message.chat.id, "Текущий заказ ⬇️")
         """выводим данные о клиенте?"""
         """взять их из БД? Вывели"""
@@ -128,13 +146,17 @@ def start(message):
         bot.send_message(message.chat.id, (str(res_sum) + " руб."), reply_markup=markupH)
 
     if message.text == '/history':
-        bot.send_message(
-            message.chat.id, "Список завершенных заказов.",
-        )
-        bot.send_message(
-            message.chat.id, "Выберите один из заказов ⬇️:",
-            reply_markup=generate_markup(0)
-        )
+        check_history(message)
+
+
+    # if message.text == '/history':
+    #     bot.send_message(
+    #         message.chat.id, "Список завершенных заказов.",
+    #     )
+    #     bot.send_message(
+    #         message.chat.id, "Выберите один из заказов ⬇️:",
+    #         reply_markup=generate_markup(0)
+    #     )
 
     if message.text == '/basket':
         send_basket(message.chat.id)
@@ -169,7 +191,7 @@ def send_basket(chat_id):
 
 def confirm_order(message):
     bot.send_message(message.chat.id, "Заказ активен ушел в БД и пошел готовиться")
-    bot.send_message(message.chat.id, "Ждем какую-то функцию подтверждения от Мирослава и Влада")
+    # bot.send_message(message.chat.id, "Ждем какую-то функцию подтверждения от Мирослава и Влада")
     bot.send_message(message.chat.id,
                      "Отложенное сообщение на id клиента будет отправлено через время готовки макс блюда + 30 минут.")
     # bot.send_message(message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
@@ -177,15 +199,15 @@ def confirm_order(message):
     # max_cooking_time = get_max_cooking_time(user_order_dict[message.chat.id]) ?
     max_cooking_time = get_max_cooking_time(id_dishes_orders)
     print(max_cooking_time)
-    # delay = max_cooking_time + 30 * 60  # добавляем 30 минут к максимальному времени готовки
-    # print(delay)
-    delay = max_cooking_time + 1 * 60  # Тест добавляем 1 минут к максимальному времени готовки
+    delay = (max_cooking_time + 30) * 60  # добавляем 30 минут к максимальному времени готовки
+    print(delay)
+    # delay = max_cooking_time + 1 * 60  # Тест добавляем 1 минут к максимальному времени готовки
     schedule_time = time.time() + delay
     print(schedule_time)
 
     # Планируем отправку отложенного сообщения
     schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
-                                           "Оставьте, пожалуйста, комментарий: ГДЕ?", delay)
+                                           "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
 
     # Сохраняем время отправки
     order_schedule_times[message.chat.id] = schedule_time
@@ -195,8 +217,23 @@ def confirm_order(message):
     markupPb = types.InlineKeyboardMarkup(row_width=1)
     button_1 = types.InlineKeyboardButton('Подтвердить', callback_data='confirm')
     button_2 = types.InlineKeyboardButton('Отследить время', callback_data='track_time')
-    markupPb.add(button_1, button_2)
+    # markupPb.add(button_1, button_2)
+    markupPb.add(button_2)
     bot.send_message(message.chat.id, "Что вы хотите сделать дальше?", reply_markup=markupPb)
+
+    # Парафин для БД
+    # for dish_bask in user_order_dict[message.chat.id]:
+    for dish_bask in my_dict_orders["user_tg_chat_id"]:
+        res_order_for_bd = [dish_bask[0], dish_bask[2]]
+        list_order_for_bd.append(res_order_for_bd)
+    print(list_order_for_bd)
+    # формирование непонятной хуйни для записи в БД под видом нового заказа. По-моему, дичь:
+    # now_order_for_bd = db.new_order(message.chat.id, schedule_time, list_order_for_bd)
+    # print(now_order_for_bd)
+    time_for_bd = (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(schedule_time)))
+    print(message.chat.id, time_for_bd)
+    # db.new_order('nfj4j3nj4', str(time_for_bd), list_order_for_bd)
+    db.new_order(message.chat.id, time_for_bd, list_order_for_bd)
 
 
 def track_time(chat_id):
@@ -266,17 +303,20 @@ def query_handler(call):
 
         """проверка на из-деливерид?"""
         if data_my_order[0][2] == 0:
-            bot.send_message(call.message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
+            bot.send_message(call.message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: "
+                                                   "https://www.instagram.com")
 
         elif data_my_order[0][2] == 1:
-            bot.send_message(call.message.chat.id, "Заказ завершен")
+            bot.send_message(call.message.chat.id, "Заказ завершен. Оставьте, пожалуйста, комментарий: "
+                                                   "https://www.instagram.com")
 
     elif flag == "t":
         # Обработка команды Сколько времени осталось?
         track_time(call.message.chat.id)
+        # bot.send_message(call.message.chat.id,
+        #                  "Ждем шедулера? Бесконечность - это не предел...?")
         bot.send_message(call.message.chat.id,
-                         "Ждем шедулера? Бесконечность - это не предел...?")
-
+                         "Бесконечность - это не предел...?")
 
     """кнопки для изменения basket?"""
     if call.data == 'change':
@@ -290,8 +330,8 @@ def query_handler(call):
             button_4 = InlineKeyboardButton('+', callback_data=f'increase_{dish_but[0]}')
             markupUB.add(button_1, button_2, button_3, button_4)
 
-        button_check = InlineKeyboardButton('Подтвердить изменения', callback_data='check')
-        markupUB.add(button_check)
+        # button_check = InlineKeyboardButton('Подтвердить изменения', callback_data='check')
+        # markupUB.add(button_check)
 
         bot.send_message(call.message.chat.id, "Список блюд для изменения заказа в корзине 🥰:", reply_markup=markupUB)
 
