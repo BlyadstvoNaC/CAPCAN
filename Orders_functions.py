@@ -9,6 +9,7 @@ from Sheduler import schedule_message, start_scheduler_thread
 import logging
 import time
 import threading
+from Order import user_order_dict
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,7 +23,7 @@ markupH.add(button_1)
 markupH.add(button_2)
 markupH.add(button_3)
 
-my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
+# my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
 """заполнить чем-то для проверки на наличие текущего заказа"""
 # user_order_dict = {message.chat.id: [(1, 'Пицца', 1, 20), (), (), ]}
 
@@ -45,17 +46,17 @@ def history_orders(data):
     return list_history_orders
 
 
-"""Функция для вычисления максимального времени приготовления блюда"""
-# список id блюд из корзины для получения времени готовки. Наверное передать Ольге и у нее получить как-то список?
-id_dishes_orders = [id_dish[0] for id_dish in my_dict_orders["user_tg_chat_id"]]
+# """Функция для вычисления максимального времени приготовления блюда"""
+# # список id блюд из корзины для получения времени готовки. Наверное передать Ольге и у нее получить как-то список?
+# # id_dishes_orders = [id_dish[0] for id_dish in my_dict_orders["user_tg_chat_id"]]
 # id_dishes_orders = [id_dish[0] for id_dish in user_order_dict[message.chat.id]]
-print(id_dishes_orders)
+# print(id_dishes_orders)
 
 
 def get_max_cooking_time(orders):
     max_cooking_time = []
 
-    for id_order in id_dishes_orders:
+    for id_order in orders:
         dish_data = db.dish_data_on_id(id_order)
         print(dish_data)
         max_cooking_time.append(dish_data[4])
@@ -168,8 +169,8 @@ def start(message):
 
 
 def send_basket(chat_id):
-    # if user_order_dict[message.chat.id]:
-    if my_dict_orders["user_tg_chat_id"]:
+    if user_order_dict[chat_id]:
+    # if my_dict_orders["user_tg_chat_id"]:
         markupB = InlineKeyboardMarkup(row_width=2)
         button_1 = InlineKeyboardButton('Изменить', callback_data='change')
         button_2 = InlineKeyboardButton('Продолжить', callback_data='continue')
@@ -177,8 +178,8 @@ def send_basket(chat_id):
 
         res_sum_bask = 0
         res_dish_bask = ''
-        # for dish_bask in user_order_dict[message.chat.id]:
-        for dish_bask in my_dict_orders["user_tg_chat_id"]:
+        for dish_bask in user_order_dict[chat_id]:
+        # for dish_bask in my_dict_orders["user_tg_chat_id"]:
             res_dish_bask += f'Блюдо {dish_bask[1]} {dish_bask[3]} - {dish_bask[2]} - {dish_bask[2] * dish_bask[3]}\n'
             res_sum_bask += dish_bask[2] * dish_bask[3]
 
@@ -196,6 +197,11 @@ def confirm_order(message):
                      "Отложенное сообщение на id клиента будет отправлено через время готовки макс блюда + 30 минут.")
     # bot.send_message(message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
 
+    """Функция для вычисления максимального времени приготовления блюда"""
+    # список id блюд из корзины для получения времени готовки. Наверное передать Ольге и у нее получить как-то список?
+    # id_dishes_orders = [id_dish[0] for id_dish in my_dict_orders["user_tg_chat_id"]]
+    id_dishes_orders = [id_dish[0] for id_dish in user_order_dict[message.chat.id]]
+    print(id_dishes_orders)
     # max_cooking_time = get_max_cooking_time(user_order_dict[message.chat.id]) ?
     max_cooking_time = get_max_cooking_time(id_dishes_orders)
     print(max_cooking_time)
@@ -222,8 +228,8 @@ def confirm_order(message):
     bot.send_message(message.chat.id, "Что вы хотите сделать дальше?", reply_markup=markupPb)
 
     # Парафин для БД
-    # for dish_bask in user_order_dict[message.chat.id]:
-    for dish_bask in my_dict_orders["user_tg_chat_id"]:
+    for dish_bask in user_order_dict[message.chat.id]:
+    # for dish_bask in my_dict_orders["user_tg_chat_id"]:
         res_order_for_bd = [dish_bask[0], dish_bask[2]]
         list_order_for_bd.append(res_order_for_bd)
     print(list_order_for_bd)
@@ -257,10 +263,10 @@ def query_handler(call):
         bot.send_message(call.message.chat.id, f"Выбранный из истории заказ ⬇️:  {data}")
         """выводим данные о клиенте?"""
         """взять их из БД? Вывели"""
-        # data_my_order_hist = db.my_orders(message.chat.id)
-        # data_my_client_hist = db.get_client_data(message.chat.id)
+        data_my_order_hist = db.my_orders(call.message.chat.id)
+        data_my_client_hist = db.get_client_data(call.message.chat.id)
         # data_dishes_hist = db.dishes_data(history[0])
-        data_my_client_hist = db.get_client_data('3fdf5g544')  # Тест
+        # data_my_client_hist = db.get_client_data('3fdf5g544')  # Тест
         data_dishes_hist = db.dishes_data(1)  # Тест
 
         """данные клиента по заказу: имя, телефон, почта, адрес"""
@@ -297,9 +303,9 @@ def query_handler(call):
 
     elif flag == "o":
         # Обработка команды Заказ подтвержден
-        # data_my_order = db.my_orders(message.chat.id)
-        # data_my_client = db.get_client_data(message.chat.id)
-        data_my_order = db.my_orders('nfj4j3nj4')  # Тест
+        data_my_order = db.my_orders(call.message.chat.id)
+        data_my_client = db.get_client_data(call.message.from_user.id)
+        # data_my_order = db.my_orders('nfj4j3nj4')  # Тест
 
         """проверка на из-деливерид?"""
         if data_my_order[0][2] == 0:
@@ -321,8 +327,8 @@ def query_handler(call):
     """кнопки для изменения basket?"""
     if call.data == 'change':
         markupUB = InlineKeyboardMarkup(row_width=4)
-        # for ind_but, dish_but in enumerate(user_order_dict[message.chat.id]):
-        for ind_but, dish_but in enumerate(my_dict_orders["user_tg_chat_id"]):
+        for ind_but, dish_but in enumerate(user_order_dict[call.message.chat.id]):
+        # for ind_but, dish_but in enumerate(my_dict_orders["user_tg_chat_id"]):
             res_upd_dish_bask = f'{dish_but[1]} - {dish_but[2]}'
             button_1 = InlineKeyboardButton('🗑', callback_data=f'delete_{dish_but[0]}')
             button_2 = InlineKeyboardButton('-', callback_data=f'decrease_{dish_but[0]}')
@@ -337,14 +343,14 @@ def query_handler(call):
 
     elif call.data == 'continue':
         """Проверка зарегистрирован ли пользователь"""
-        # if db.is_registered(message.chat.id):
-        if db.is_registered('3fdf5g544'):
+        if db.is_registered(call.message.from_user.id):
+        # if db.is_registered('3fdf5g544'):
             """выводим данные о клиенте?"""
             """взять их из БД? Вывели"""
 
-            # data_my_client = db.get_client_data(message.chat.id)
-            data_my_client = db.get_client_data('3fdf5g544')
-            data_my_order = db.my_orders('3fdf5g544')
+            data_my_client = db.get_client_data(call.message.from_user.id)
+            # data_my_client = db.get_client_data('3fdf5g544')
+            # data_my_order = db.my_orders('3fdf5g544')
             data_dishes_my_order = db.dishes_data(1)
 
             data_user = f'{data_my_client[2]}\n{data_my_client[3]}\n{data_my_client[4]}\n{data_my_client[5]}'
@@ -358,8 +364,8 @@ def query_handler(call):
             """функция вывода списка блюд c ценой и общей суммой заказа в корзине"""
             res_sum_bask = 0
             res_dish_bask = ''
-            # for dish_bask in user_order_dict[message.chat.id]:
-            for dish_bask in my_dict_orders["user_tg_chat_id"]:
+            for dish_bask in user_order_dict[call.message.chat.id]:
+            # for dish_bask in my_dict_orders["user_tg_chat_id"]:
                 res_dish_bask += f'{dish_bask[1]}\n'
                 res_sum_bask += dish_bask[2] * dish_bask[3]
 
@@ -370,44 +376,44 @@ def query_handler(call):
         """функция удаления блюда в корзине"""
     elif call.data.startswith('delete_'):
         dish_id = int(call.data.split('_')[1])
-        # user_order_dict[message.chat.id] = [dish for dish in user_order_dict[message.chat.id] if dish[0] != dish_id]
-        my_dict_orders["user_tg_chat_id"] = [dish for dish in my_dict_orders["user_tg_chat_id"] if dish[0] != dish_id]
+        user_order_dict[call.message.chat.id] = [dish for dish in user_order_dict[call.message.chat.id] if dish[0] != dish_id]
+        # my_dict_orders["user_tg_chat_id"] = [dish for dish in my_dict_orders["user_tg_chat_id"] if dish[0] != dish_id]
         bot.send_message(call.message.chat.id, "Блюдо удалено из корзины.")
-        print(my_dict_orders["user_tg_chat_id"])
+        # print(my_dict_orders["user_tg_chat_id"])
         send_basket(call.message.chat.id)
 
         """функция уменьшения кол-ва блюд в корзине"""
     elif call.data.startswith('decrease_'):
         dish_id = int(call.data.split('_')[1])
-        # for i, dish in enumerate(user_order_dict[message.chat.id]):
-        for i, dish in enumerate(my_dict_orders["user_tg_chat_id"]):
+        for i, dish in enumerate(user_order_dict[call.message.chat.id]):
+        # for i, dish in enumerate(my_dict_orders["user_tg_chat_id"]):
             if dish[0] == dish_id:
                 if dish[2] > 1:
                     dish_list = list(dish)
                     dish_list[2] -= 1
-                    # user_order_dict[message.chat.id][i] = tuple(dish_list)
-                    my_dict_orders["user_tg_chat_id"][i] = tuple(dish_list)
+                    user_order_dict[call.message.chat.id][i] = tuple(dish_list)
+                    # my_dict_orders["user_tg_chat_id"][i] = tuple(dish_list)
                 else:
-                    # user_order_dict[message.chat.id].pop(i)
-                    my_dict_orders["user_tg_chat_id"].pop(i)
+                    user_order_dict[call.message.chat.id].pop(i)
+                    # my_dict_orders["user_tg_chat_id"].pop(i)
                 break
         bot.send_message(call.message.chat.id, "Количество блюда уменьшено.")
-        print(my_dict_orders["user_tg_chat_id"])
+        # print(my_dict_orders["user_tg_chat_id"])
         send_basket(call.message.chat.id)
 
         """функция добавления кол-ва блюд в корзине"""
     elif call.data.startswith('increase_'):
         dish_id = int(call.data.split('_')[1])
-        # for i, dish in enumerate(user_order_dict[message.chat.id]:
-        for i, dish in enumerate(my_dict_orders["user_tg_chat_id"]):
+        for i, dish in enumerate(user_order_dict[call.message.chat.id]):
+        # for i, dish in enumerate(my_dict_orders["user_tg_chat_id"]):
             if dish[0] == dish_id:
                 dish_list = list(dish)
                 dish_list[2] += 1
-                # user_order_dict[message.chat.id][i] = tuple(dish_list)
-                my_dict_orders["user_tg_chat_id"][i] = tuple(dish_list)
+                user_order_dict[call.message.chat.id][i] = tuple(dish_list)
+                # my_dict_orders["user_tg_chat_id"][i] = tuple(dish_list)
                 break
         bot.send_message(call.message.chat.id, "Количество блюда увеличено.")
-        print(my_dict_orders["user_tg_chat_id"])
+        # print(my_dict_orders["user_tg_chat_id"])
         send_basket(call.message.chat.id)
 
         """обработчик check в query_handler вызывает send_basket, обновляя состояние корзины"""
