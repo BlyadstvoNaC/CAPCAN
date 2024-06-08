@@ -6,8 +6,8 @@ from My.BotToken import token
 import re
 from Orders_functions import send_basket, query_handler, check_history
 import Sheduler
+from Order import user_order_dict
 
-user_order_dict = {}  #корзина общая с Федей
 user_data = {}
 command_list = ['/start', '/profile', '/menu', '/basket', '/history', '/my_orders']
 
