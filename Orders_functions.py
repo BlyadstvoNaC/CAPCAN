@@ -22,9 +22,9 @@ markupH.add(button_1)
 markupH.add(button_2)
 markupH.add(button_3)
 
-my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
+# my_dict_orders = {"user_tg_chat_id": [(1, 'Пицца', 1, 20), (2, 'Омлет', 1, 17), (3, 'Фо-бо', 1, 33), ]}
 """заполнить чем-то для проверки на наличие текущего заказа"""
-# user_order_dict = {message.chat.id: [(1, 'Пицца', 1, 20), (), (), ]}
+user_order_dict = {message.chat.id: [(1, 'Пицца', 1, 20), (), (), ]}
 
 # Для сохранения время отправки
 order_schedule_times = {}
