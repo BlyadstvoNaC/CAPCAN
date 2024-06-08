@@ -4,9 +4,10 @@ from KeyBoards import profileMP, MenuMP
 from DBfunctions import db
 from My.BotToken import token
 import re
-from Orders_functions import send_basket, check_history, query_handler
+from Orders_functions import send_basket, query_handler, check_history
+import Sheduler
+from Order import user_order_dict
 
-user_order_dict = {}  #корзина общая с Федей
 user_data = {}
 command_list = ['/start', '/profile', '/menu', '/basket', '/history', '/my_orders']
 
@@ -102,6 +103,7 @@ def reg_email(message):
 #########################################################################################
 @bot.callback_query_handler(lambda callback: callback.data.startswith('pr_'))
 def change_profile(callback):
+    bot.answer_callback_query(callback_query_id=callback.id)
     data = callback.data[3:]
     if data == 'name':
         msg = bot.send_message(callback.message.chat.id, "Ввдеите новое имя:")
@@ -134,7 +136,9 @@ def change_name(message):
     set_profile(message)
 
 def change_tp(message):
-    if len(message.text) == 13 and message.text[:4] == '+375' and message.text[4:6] in ['29', '33', '44', '25']:
+    if message.text == None:
+        bot.send_message(message.chat.id, '' )
+    elif len(message.text) == 13 and message.text[:4] == '+375' and message.text[4:6] in ['29', '33', '44', '25']:
         tp = message.text
         tmp_user_list = list(db.get_client_data(message.from_user.id))
         tmp_user_list[3] = tp
@@ -173,6 +177,7 @@ def check_menu(message):
 
 @bot.callback_query_handler(lambda callback: callback.data.startswith('men_'))
 def check_dishes(callback):
+    bot.answer_callback_query(callback_query_id=callback.id)
     data = callback.data[4:]
     if data == "basket":
         send_basket(callback.message.chat.id)
@@ -208,6 +213,7 @@ def dish_info(message):
 
 @bot.callback_query_handler(lambda callback: callback.data.startswith('ds_'))
 def make_order(callback):
+    bot.answer_callback_query(callback_query_id=callback.id)
     data = callback.data[3:]
     if data == 'menu':
         check_menu(callback.message)
@@ -219,7 +225,6 @@ def make_order(callback):
             user_order_dict.update({user_id : [dish]})
         else:
             user_order_dict[user_id].append(dish)
-        print(user_order_dict)
     elif data == '+':
         cnt = check_count(callback)+1
         name = str(check_name(callback))
@@ -293,6 +298,7 @@ def check_user_id(callback):
 #########################################################################################
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
+    bot.answer_callback_query(callback_query_id=call.id)
     query_handler(call)
 #########################################################################################
 
