@@ -5,7 +5,6 @@ from DBfunctions import db
 from My.BotToken import token
 import re
 from Orders_functions import send_basket, query_handler, check_history
-import Sheduler
 from Order import user_order_dict
 
 user_data = {}
@@ -33,7 +32,8 @@ def handle_command(message):
         check_history(message)
     elif message.text == '/my_orders':
         pass
-
+    elif message.text == '/basket':
+        send_basket(message.chat.id)
 #                                   БЛОК РЕГИСТРАЦИИ                                    #
 #########################################################################################
 def regist(message):
@@ -49,13 +49,13 @@ def reg_name(message):
         bot.register_next_step_handler(msg, reg_name)
     else:
         user_data.update({message.from_user.id: [message.text]})
-        msg = bot.send_message(message.chat.id, 'Как мы можем с вами связаться?')
+        msg = bot.send_message(message.chat.id, 'Введите номер телефона: (+375(код)*******)')
         bot.register_next_step_handler(msg, reg_tp_number)
 
 def reg_tp_number(message):
     if message.text in command_list:
         bot.send_message(message.chat.id, "Сначала пройдите регистрацию:")
-        msg = bot.send_message(message.chat.id, 'Как мы можем с вами связаться?')
+        msg = bot.send_message(message.chat.id, 'Введите номер телефона: (+375(код)*******)')
         bot.register_next_step_handler(msg, reg_tp_number)
     else:
         if len(message.text) == 13 and message.text[:4] == '+375' and message.text[4:6] in ['29', '33', '44', '25']:
@@ -109,7 +109,7 @@ def change_profile(callback):
         msg = bot.send_message(callback.message.chat.id, "Ввдеите новое имя:")
         bot.register_next_step_handler(msg, change_name)
     elif data == 'tp':
-        msg = bot.send_message(callback.message.chat.id, "Ввeдите новый номер телефона:")
+        msg = bot.send_message(callback.message.chat.id, "Ввeдите новый номер телефона (+375(код)*******)):")
         bot.register_next_step_handler(msg, change_tp)
     elif data == 'address':
         msg = bot.send_message(callback.message.chat.id, "Ввeдите новый адрес:")
@@ -266,10 +266,8 @@ def make_order(callback):
                 chat_id=callback.message.chat.id,
                 message_id=callback.message.message_id,
                 reply_markup=generate_order_keyb(1, inf[1]))
-
     elif data == 'next':
         send_basket(callback.message.chat.id)
-
 
 def check_name(callback):
     mess = callback.message.json
