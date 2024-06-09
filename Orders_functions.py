@@ -43,10 +43,9 @@ def history_orders(data):
 
     for index, history in enumerate(data):
         """взять из Оленой функции набор с заказами и вывести их по одному: заказ номер - дата"""
-        res_hystory = f'{history[0]} - {history[3]}'  # Форматирование строки с номером заказа и датой
-        list_history_orders.append(res_hystory)
+        res_history = f'{history[0]} - {history[3]}'  # Форматирование строки с номером заказа и датой
+        list_history_orders.append((res_history, history[0]))  # Возвращаем строку и history[0]
     return list_history_orders
-
 
 # """Функция для вычисления максимального времени приготовления блюда"""
 # # список id блюд из корзины для получения времени готовки. Наверное передать Ольге и у нее получить как-то список?
@@ -88,13 +87,14 @@ def generate_markup(page, data_history):
     markup = InlineKeyboardMarkup(row_width=1)
     start_index = page * 2  # Начальный индекс для отображаемых заказов
     end_index = start_index + 2  # Конечный индекс для отображаемых заказов
-    for item in history_orders(data_history)[start_index:end_index]:
-        markup.add(InlineKeyboardButton(item, callback_data="m" + f'{item}'))
+    for item, order_id in history_orders(data_history)[start_index:end_index]:
+        print(item, order_id)
+        markup.add(InlineKeyboardButton(item, callback_data="m" + str(order_id)))
     nav_buttons = []
     if page > 0:
-        nav_buttons.append(InlineKeyboardButton("<<<", callback_data='<' + f'{page - 1}'))
+        nav_buttons.append(InlineKeyboardButton("<<<", callback_data='<' + str(page - 1)))
     if end_index < len(history_orders(data_history)):
-        nav_buttons.append(InlineKeyboardButton(">>>", callback_data='>' + f'{page + 1}'))
+        nav_buttons.append(InlineKeyboardButton(">>>", callback_data='>' + str(page + 1)))
     markup.row(*nav_buttons)
     return markup
 
@@ -120,7 +120,11 @@ def check_history(message):
 
 
 def check_my_orders(message):
+
     data_my_order = db.my_orders(message.chat.id)
+    if not data_my_order:
+        bot.send_message(message.chat.id, "У вас нет текущих заказов.")
+        return
     data_my_client = db.get_client_data(message.chat.id)
     # data_dishes_my_order = db.dishes_data(history[0])
     # data_my_order = db.my_orders('nfj4j3nj4')  # Тест
@@ -195,12 +199,13 @@ def send_basket(chat_id):
         res_sum_bask = 0
         res_dish_bask = ''
         for dish_bask in user_order_dict[chat_id]:
+            print(dish_bask)
             # for dish_bask in my_dict_orders["user_tg_chat_id"]:
-            res_dish_bask += f'Блюдо {dish_bask[1]} {dish_bask[3]} - {dish_bask[2]} - {dish_bask[2] * dish_bask[3]}\n'
+            res_dish_bask += f'Блюдо {dish_bask[1]}: цена {dish_bask[3]} руб. - {dish_bask[2]} шт. - итого {dish_bask[2] * dish_bask[3]} руб.\n'
             res_sum_bask += dish_bask[2] * dish_bask[3]
 
         bot.send_message(chat_id,
-                         f"Список блюд c ценой и общая сумма заказа в корзине 🥰:\n{res_dish_bask}{res_sum_bask} руб.",
+                         f"Список блюд c ценой и общая сумма заказа в корзине 🥰:\n{res_dish_bask} Всего: {res_sum_bask} руб.",
                          reply_markup=markupB)
     else:
         bot.send_message(chat_id, "Basket пустая!", reply_markup=None)
@@ -209,6 +214,7 @@ def send_basket(chat_id):
 def confirm_order(message):
     bot.send_message(message.chat.id, "Заказ активен ушел в БД и пошел готовиться")
     # bot.send_message(message.chat.id, "Ждем какую-то функцию подтверждения от Мирослава и Влада")
+
     bot.send_message(message.chat.id,
                      "Отложенное сообщение на id клиента будет отправлено через время готовки макс блюда + 30 минут.")
     # bot.send_message(message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
@@ -221,15 +227,27 @@ def confirm_order(message):
     # max_cooking_time = get_max_cooking_time(user_order_dict[message.chat.id]) ?
     max_cooking_time = get_max_cooking_time(id_dishes_orders)
     print(max_cooking_time)
-    delay = (max_cooking_time + 30) * 60  # добавляем 30 минут к максимальному времени готовки
-    print(delay)
-    # delay = max_cooking_time + 1 * 60  # Тест добавляем 1 минут к максимальному времени готовки
+    # delay = (max_cooking_time + 30) * 60  # добавляем 30 минут к максимальному времени готовки
+    # print(delay)
+    delay = max_cooking_time + 1 * 60  # Тест добавляем 1 минут к максимальному времени готовки
     schedule_time = time.time() + delay
     print(schedule_time)
+
+    # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
+    print(user_order_dict)
+    user_order_dict.clear()
+    print(user_order_dict)
 
     # Планируем отправку отложенного сообщения
     schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
                                            "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
+
+    db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
+
+    # # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
+    # print(user_order_dict)
+    # user_order_dict.clear()
+    # print(user_order_dict)
 
     # Сохраняем время отправки
     order_schedule_times[message.chat.id] = schedule_time
@@ -273,40 +291,40 @@ def track_time(chat_id):
 
 
 def query_handler(call):
-    bot.answer_callback_query(callback_query_id=call.id, )
+    bot.answer_callback_query(callback_query_id=call.id)
+    # print(call.data)
     flag = call.data[0]
     data = call.data[1:]
     if flag == "m":
+        order_id = int(data)  # Извлечение order_id из callback_data
+        # print(order_id, type(order_id))
+        bot.send_message(call.message.chat.id, f"Выбранный из истории заказ ⬇️: {order_id}")
 
-        bot.send_message(call.message.chat.id, f"Выбранный из истории заказ ⬇️:  {data}")
-        """выводим данные о клиенте?"""
-        """взять их из БД? Вывели"""
-        data_my_order_hist = db.my_orders(call.message.chat.id)
+        data_dishes_hist = db.dishes_data(order_id)
         data_my_client_hist = db.get_client_data(call.message.chat.id)
-        # data_dishes_hist = db.dishes_data(history[0])
-        # data_my_client_hist = db.get_client_data('3fdf5g544')  # Тест
-        data_dishes_hist = db.dishes_data(1)  # Тест
+        # data_dishes_hist = db.orders_history(call.message.chat.id)
+        # print(data_dishes_hist)
 
-        """данные клиента по заказу: имя, телефон, почта, адрес"""
-        # for user in data_my_client:
         data_user = f'{data_my_client_hist[2]}\n{data_my_client_hist[3]}\n{data_my_client_hist[4]}\n{data_my_client_hist[5]}'
         bot.send_message(call.message.chat.id, "Данные о клиенте:")
         bot.send_message(call.message.chat.id, data_user)
 
-        print(data_my_client_hist)
-        print(data_dishes_hist)
-        """выводим список блюд (тоже из бд или из корзины)?"""
-        """взять их из откуда(БД)?"""
-        """НЕ Выводим кнопки"""
-        bot.send_message(call.message.chat.id, f"Список блюд и общая сумма выбранного заказа ⬇️:   {data}")
+        bot.send_message(call.message.chat.id, f"Список блюд и общая сумма выбранного заказа ⬇️: {order_id}")
         res_sum = 0
         res_dish_hist = ''
         for dish in data_dishes_hist:
             res_dish_hist += f'{dish[1]}\n'
             res_sum += dish[2] * dish[3]
         bot.send_message(call.message.chat.id, res_dish_hist)
-        bot.send_message(call.message.chat.id, (str(res_sum) + " руб."))
-
+        bot.send_message(call.message.chat.id, f"{str(res_sum)} руб.")
+    elif flag == "<" or flag == ">":
+        page = int(data)
+        data_history = db.orders_history(call.message.chat.id)  # Получение истории заказов из БД
+        if not data_history:
+            bot.edit_message_text("Истории заказов нет.", call.message.chat.id, call.message.message_id)
+            return
+        bot.edit_message_text("Выберите один из заказов ⬇️", call.message.chat.id, call.message.message_id,
+                              reply_markup=generate_markup(page, data_history))
 
     elif flag == "<" or flag == ">":
         page = int(data)
@@ -458,22 +476,20 @@ if __name__ == "__main__":
 
     @bot.message_handler(content_types=['text'])
     def message_handler(message):
-        start(message)
-        # try:
-        #     start(message)
-        # except Exception as e:
-        #     logging.error(f"Error in message_handler: {e}")
+        # start(message)
+        try:
+            start(message)
+        except Exception as e:
+            logging.error(f"Error in message_handler: {e}")
 
 
     @bot.callback_query_handler(func=lambda call: True)
     def callback_handler(call):
-
-        query_handler(call)
-
-        # try:
-        #     query_handler(call)
-        # except Exception as e:
-        #     logging.error(f"Error in callback_handler: {e}")
+        # query_handler(call)
+        try:
+            query_handler(call)
+        except Exception as e:
+            logging.error(f"Error in callback_handler: {e}")
 
 
     # while True:
