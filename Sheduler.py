@@ -22,7 +22,7 @@ def start_scheduler_thread():
             time.sleep(1)
 
     scheduler_thread = threading.Thread(target=run_scheduler)
-    scheduler_thread.daemon = True
+    # scheduler_thread.daemon = True
     scheduler_thread.start()
     print("Запущен поток планировщика")
 

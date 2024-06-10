@@ -47,6 +47,7 @@ def history_orders(data):
         list_history_orders.append((res_history, history[0]))  # Возвращаем строку и history[0]
     return list_history_orders
 
+
 # """Функция для вычисления максимального времени приготовления блюда"""
 # # список id блюд из корзины для получения времени готовки. Наверное передать Ольге и у нее получить как-то список?
 # # id_dishes_orders = [id_dish[0] for id_dish in my_dict_orders["user_tg_chat_id"]]
@@ -120,7 +121,6 @@ def check_history(message):
 
 
 def check_my_orders(message):
-
     data_my_order = db.my_orders(message.chat.id)
     if not data_my_order:
         bot.send_message(message.chat.id, "У вас нет текущих заказов.")
@@ -212,13 +212,6 @@ def send_basket(chat_id):
 
 
 def confirm_order(message):
-    bot.send_message(message.chat.id, "Заказ активен ушел в БД и пошел готовиться")
-    # bot.send_message(message.chat.id, "Ждем какую-то функцию подтверждения от Мирослава и Влада")
-
-    bot.send_message(message.chat.id,
-                     "Отложенное сообщение на id клиента будет отправлено через время готовки макс блюда + 30 минут.")
-    # bot.send_message(message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
-
     """Функция для вычисления максимального времени приготовления блюда"""
     # список id блюд из корзины для получения времени готовки. Наверное передать Ольге и у нее получить как-то список?
     # id_dishes_orders = [id_dish[0] for id_dish in my_dict_orders["user_tg_chat_id"]]
@@ -232,22 +225,6 @@ def confirm_order(message):
     delay = max_cooking_time + 1 * 60  # Тест добавляем 1 минут к максимальному времени готовки
     schedule_time = time.time() + delay
     print(schedule_time)
-
-    # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
-    print(user_order_dict)
-    user_order_dict.clear()
-    print(user_order_dict)
-
-    # Планируем отправку отложенного сообщения
-    schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
-                                           "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
-
-    db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
-
-    # # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
-    # print(user_order_dict)
-    # user_order_dict.clear()
-    # print(user_order_dict)
 
     # Сохраняем время отправки
     order_schedule_times[message.chat.id] = schedule_time
@@ -274,7 +251,24 @@ def confirm_order(message):
     print(message.chat.id, time_for_bd)
     # db.new_order('nfj4j3nj4', str(time_for_bd), list_order_for_bd)
     # запись в БД под видом нового заказа. Вроде протестено, да здесь вообще все протестено:
+
+    bot.send_message(message.chat.id, "Заказ активен ушел в БД и пошел готовиться")
+    # bot.send_message(message.chat.id, "Ждем какую-то функцию подтверждения от Мирослава и Влада")
     db.new_order(message.chat.id, time_for_bd, list_order_for_bd)
+    # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
+    print(user_order_dict)
+    user_order_dict.update()
+    print(user_order_dict)
+
+    bot.send_message(message.chat.id,
+                     "Отложенное сообщение на id клиента будет отправлено через время готовки макс блюда + 30 минут.")
+    # bot.send_message(message.chat.id, "Доставлен ли заказ? Оставьте, пожалуйста, комментарий: ГДЕ?")
+
+    # Планируем отправку отложенного сообщения
+    schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
+                                           "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
+
+
 
 
 def track_time(chat_id):
@@ -348,6 +342,8 @@ def query_handler(call):
         print(data_my_order)
         data_my_client = db.get_client_data(call.message.chat.id)
         # data_my_order = db.my_orders('nfj4j3nj4')  # Тест
+
+        db.order_is_delivered(db.my_orders(call.message.chat.id)[0][0])
 
         """проверка на из-деливерид?"""
         if data_my_order[0][2] == 0:
