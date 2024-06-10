@@ -261,7 +261,7 @@ def confirm_order(message):
 
     # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
 
-    user_order_dict.pop(message.chat.id)
+    user_order_dict.clear()
     print(user_order_dict)
 
     bot.send_message(message.chat.id,
@@ -272,7 +272,7 @@ def confirm_order(message):
     schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
                                            "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
 
-    # db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
+    db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
 
 
 def track_time(chat_id):
