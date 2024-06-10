@@ -324,14 +324,14 @@ def query_handler(call):
         bot.edit_message_text("Выберите один из заказов ⬇️", call.message.chat.id, call.message.message_id,
                               reply_markup=generate_markup(page, data_history))
 
-    elif flag == "<" or flag == ">":
-        page = int(data)
-        data_history = db.orders_history(call.message.chat.id)  # Получение истории заказов из БД
-        if not data_history:
-            bot.edit_message_text("Истории заказов нет.", call.message.chat.id, call.message.message_id)
-            return
-        bot.edit_message_text("Выберите один из заказов ⬇️", call.message.chat.id, call.message.message_id,
-                              reply_markup=generate_markup(page, data_history))
+    # elif flag == "<" or flag == ">":
+    #     page = int(data)
+    #     data_history = db.orders_history(call.message.chat.id)  # Получение истории заказов из БД
+    #     if not data_history:
+    #         bot.edit_message_text("Истории заказов нет.", call.message.chat.id, call.message.message_id)
+    #         return
+    #     bot.edit_message_text("Выберите один из заказов ⬇️", call.message.chat.id, call.message.message_id,
+    #                           reply_markup=generate_markup(page, data_history))
 
 
     elif flag == "h":
