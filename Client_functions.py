@@ -4,7 +4,7 @@ from KeyBoards import profileMP, MenuMP
 from DBfunctions import db
 from My.BotToken import token
 import re
-from Orders_functions import send_basket, query_handler, check_history
+from Orders_functions import send_basket, query_handler, check_history, check_my_orders
 from Order import user_order_dict
 
 user_data = {}
@@ -31,9 +31,9 @@ def handle_command(message):
     elif message.text == '/history':
         check_history(message)
     elif message.text == '/my_orders':
-        pass
+        check_my_orders(message)
     elif message.text == '/basket':
-        send_basket(message.chat.id)
+        send_basket(chat_id=message.chat.id)
 #                                   БЛОК РЕГИСТРАЦИИ                                    #
 #########################################################################################
 def regist(message):
@@ -167,7 +167,6 @@ def change_address(message):
     set_profile(message)
 
 #########################################################################################
-
 
 #                                   БЛОК ВЫВОДА МЕНЮ                                    #
 #########################################################################################
