@@ -349,6 +349,7 @@ def query_handler(call):
 
         db.order_is_delivered(db.my_orders(call.message.chat.id)[0][0])
 
+
         """проверка на из-деливерид?"""
         if data_my_order[0][2] == 0:
             bot.send_message(call.message.chat.id, "Ваш заказ еще не доставлен.")
