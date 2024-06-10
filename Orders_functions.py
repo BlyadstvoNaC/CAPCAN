@@ -250,14 +250,18 @@ def confirm_order(message):
     time_for_bd = (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(schedule_time)))
     print(message.chat.id, time_for_bd)
     # db.new_order('nfj4j3nj4', str(time_for_bd), list_order_for_bd)
-    # запись в БД под видом нового заказа. Вроде протестено, да здесь вообще все протестено:
+
 
     bot.send_message(message.chat.id, "Заказ активен ушел в БД и пошел готовиться")
+
     # bot.send_message(message.chat.id, "Ждем какую-то функцию подтверждения от Мирослава и Влада")
+
+    # запись в БД под видом нового заказа. Вроде протестено, да здесь вообще все протестено:
     db.new_order(message.chat.id, time_for_bd, list_order_for_bd)
+
     # Гребанная очистка корзины. Куда бы ее засунуть поглубже?
-    print(user_order_dict)
-    user_order_dict.update()
+
+    user_order_dict.clear()
     print(user_order_dict)
 
     bot.send_message(message.chat.id,
@@ -268,7 +272,7 @@ def confirm_order(message):
     schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
                                            "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
 
-
+    db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
 
 
 def track_time(chat_id):
