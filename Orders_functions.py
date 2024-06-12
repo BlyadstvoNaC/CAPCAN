@@ -272,7 +272,7 @@ def confirm_order(message):
     schedule_message(bot, message.chat.id, "Ваш заказ готов и отправлен. Спасибо за ожидание!"
                                            "Оставьте, пожалуйста, комментарий: https://www.instagram.com", delay)
 
-    db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
+    # db.order_is_delivered(db.my_orders(message.chat.id)[0][0])
 
 
 def track_time(chat_id):
